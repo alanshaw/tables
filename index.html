@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<head>
+<link rel="stylesheet" href="https://unpkg.com/tachyons@4.12.0/css/tachyons.min.css"/>
+</head>
+<body class="sans-serif ma3 f2">
+<form method="get" class="mb3">
+  <p>I want to practice my <input id="num" name="n" type="number" value="5" style="max-width:5rem" /> times tables <button type="submit">Change</button></p>
+</form>
+<hr />
+<div id="questions"></div>
+<hr />
+<div id="">
+  <div>Time: <span id="timer">Ready?</span></div>
+  <div>Score: <span id="score">0</span></div>
+</div>
+<div id="template" class="dn">
+  <form class="mb3">
+    <span class="a"></span> ✖️ <span class="b"></span> 🟰 <input type="number" class="answer" style="max-width:5rem" /> <button type="submit">Mark</button> <span class="mark dn"></span>
+  </form>
+</div>
+<script>
+  const numEl = document.getElementById('num')
+  const qsEl = document.getElementById('questions')
+  const tplEl = document.getElementById('template')
+
+  const numQs = new URL(window.location.href).searchParams.get('n')
+  const num = parseInt(numQs ?? numEl.value)
+  numEl.value = num
+
+  let start = Date.now()
+  const maxTime = 60
+  const isTimeOver = () => {
+    const now = Date.now()
+    const since = Math.floor((now - start) / 1000)
+    return since >= maxTime
+  }
+
+  let score = 0
+  const incrementScore = () => {
+    score += isTimeOver() ? 0 : 1
+    document.querySelector('#score').innerText = score
+  }
+
+  const createQuestion = () => {
+    const qEl = document.createElement('div')
+    qEl.innerHTML = tplEl.innerHTML
+
+    const a = Math.floor(Math.random() * 11) + 1
+    const b = num
+
+    qEl.querySelector('.a').innerText = a
+    qEl.querySelector('.b').innerText = b
+
+    const formEl = qEl.querySelector('form')
+    const answerEl = qEl.querySelector('.answer')
+    const markEl = qEl.querySelector('.mark')
+
+    answerEl.setAttribute('step', b)
+
+    formEl.addEventListener('submit', e => {
+      e.preventDefault()
+      markEl.classList.remove('dn')
+      if (a*b !== parseInt(answerEl.value)) {
+        markEl.innerText = '❌'
+        return
+      }
+      markEl.innerText = isTimeOver() ? '☑️' : '✅'
+      formEl.removeChild(qEl.querySelector('[type=submit]'))
+      answerEl.setAttribute('disabled', 'disabled')
+      if (!isTimeOver()) {
+        incrementScore()
+        createQuestion()
+      }
+      window.scrollTo(0, document.body.scrollHeight)
+    })
+
+    qsEl.appendChild(qEl)
+    answerEl.focus()
+  }
+
+  createQuestion()
+
+  const timer = document.querySelector('#timer')
+  timer.innerText = 'Ready?'
+  setTimeout(() => {
+    timer.innerText = 'Steady?'
+  }, 1000)
+  setTimeout(() => {
+    timer.innerText = 'Go!'
+    start = Date.now()
+  }, 2000)
+  setTimeout(() => {
+    setInterval(() => {
+      const now = Date.now()
+      const since = isTimeOver() ? maxTime : Math.floor((now - start) / 1000)
+      timer.innerText = since + 's'
+    }, 100)
+  }, 3000)
+</script>
+</body>
+</html>
